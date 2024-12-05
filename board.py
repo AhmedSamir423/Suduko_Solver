@@ -29,10 +29,13 @@ class Board:
                 if self.board[i][j] == 0:
                     return i, j  # Return row, column of the empty cell
         return None
+    
+    #print the domains of each cell at the beginning
     def print_domains(self):
         for i in range(9):
             for j in range(9):
-                print(f"Cell ({i}, {j}): {self.domains[i][j]}")
+                if self.board[i][j] == 0:
+                    print(f"Cell ({i}, {j}): {self.domains[i][j]}")
                 
 
     # Helper: Check if placing num in cell (row, col) is valid
