@@ -5,6 +5,8 @@ class Board:
         # VARIABLES: Each cell in this 9x9 grid represents a variable
         self.board = [[0 for _ in range(9)] for _ in range(9)]
         self.arcs = self.define_arcs()
+        self.domains = [[[] for _ in range(9)] for _ in range(9)]  # To store the domains for each cell
+        
 
     def print_board(self):
         for i in range(9):
@@ -19,9 +21,21 @@ class Board:
                 else:
                     print(str(self.board[i][j]) + " ", end="")
         print("  - - - - - - - - - - - - - ")
+    def update_domains(self):
+        for i in range(9):
+            for j in range(9):
+                if self.board[i][j] != 0:  
+                    self.domains[i][j] = [self.board[i][j]]  # Set domain to the number already in the cell
+                else:  
+                    self.domains[i][j] = [1, 2, 3, 4, 5, 6, 7, 8, 9]  # Initialize domain to all possible values
+
+    def print_domains(self):
+        for row in self.domains:
+            print(row)
 
     def set_initial_values(self, grid):
         self.board = [row[:] for row in grid]
+        self.update_domains()
 
     def find_empty(self):
         for i in range(9):
@@ -150,17 +164,22 @@ if __name__ == "__main__":
 
     board = Board()
     board.set_initial_values(grid)
-    print(board.arcs[:10]) 
-
+    # IF YOU WANT TO TEST ARCS DO THIS print(board.arcs) 
     print("Initial Sudoku:")
     board.print_board()
+    print("\nDomains for Each Cell:")
+    board.print_domains()
 
-    # Validate the puzzle
+    # IF YOU WANT TO TEST IF THE GAME IS SOLVABLE DO THIS
+    '''
     if board.validate_puzzle():
         print("The input puzzle is solvable.")
     else:
         print("The input puzzle is not solvable.")
+    '''
 
+    # IF YOU WANT TO TEST GENERATING A GAME AND SOLVING IT DO THIS
+    '''
     board2 = Board()
     # Generate a random puzzle
     print("\nGenerating a random Sudoku puzzle:")
@@ -169,3 +188,4 @@ if __name__ == "__main__":
     board2.solve()
     print("\nSolved Sudoku:")
     board2.print_board()
+    '''
