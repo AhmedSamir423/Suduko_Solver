@@ -4,6 +4,7 @@ class Board:
     def __init__(self):
         # VARIABLES: Each cell in this 9x9 grid represents a variable
         self.board = [[0 for _ in range(9)] for _ in range(9)]
+        self.arcs = self.define_arcs()
 
     def print_board(self):
         for i in range(9):
@@ -28,7 +29,41 @@ class Board:
                 if self.board[i][j] == 0:
                     return i, j  #(row, col)
         return None
+    
+    def define_arcs(self):
+        arcs = []
 
+        # Row arcs: Pair all cells in each row
+        for i in range(9):  # Row index
+            for j in range(9):  # First cell in the row
+                for k in range(j + 1, 9):  # Pair with all subsequent cells in the row
+                    arcs.append(((i, j), (i, k)))
+
+        # Column arcs: Pair all cells in each column
+        for j in range(9):  # Column index
+            for i in range(9):  # First cell in the column
+                for k in range(i + 1, 9):  # Pair with all subsequent cells in the column
+                    arcs.append(((i, j), (k, j)))
+
+        # Subgrid arcs: Pair all cells within each 3x3 subgrid
+        for box_row in range(0, 9, 3):  # Top-left corner row of each subgrid
+            for box_col in range(0, 9, 3):  # Top-left corner column of each subgrid
+                # Collect all cells in the current 3x3 subgrid
+                subgrid_cells = [(box_row + r, box_col + c) for r in range(3) for c in range(3)]
+                for i in range(len(subgrid_cells)):
+                    for j in range(i + 1, len(subgrid_cells)):  # Pair each cell with the others
+                        arcs.append((subgrid_cells[i], subgrid_cells[j]))
+
+        return arcs
+
+
+                        
+                        
+                        
+                    
+
+        return arcs
+    
     def is_valid(self, num, row, col):
         # CONSTRAINTS
         # Check row
@@ -90,7 +125,6 @@ class Board:
         return self.board
 
 if __name__ == "__main__":
-    # Example Sudoku grid
     grid = [
         [5, 3, 0, 0, 7, 0, 0, 0, 0],
         [6, 0, 0, 1, 9, 5, 0, 0, 0],
@@ -105,6 +139,7 @@ if __name__ == "__main__":
 
     board = Board()
     board.set_initial_values(grid)
+    print(board.define_arcs())
 
     print("Initial Sudoku:")
     board.print_board()
