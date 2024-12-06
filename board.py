@@ -2,7 +2,7 @@ import random
 
 class Board:
     def __init__(self):
-        # VARIABLES: Each cell in this 9x9 grid represents a variable
+        # VARIABLES: Each cell in this 9x9 grid is a variable
         self.board = [[0 for _ in range(9)] for _ in range(9)]
         self.arcs = self.define_arcs()
         self.domains = [[[] for _ in range(9)] for _ in range(9)]  # To store the domains for each cell
@@ -21,6 +21,7 @@ class Board:
                 else:
                     print(str(self.board[i][j]) + " ", end="")
         print("  - - - - - - - - - - - - - ")
+    
     def update_domains(self):
         for i in range(9):
             for j in range(9):
@@ -45,31 +46,30 @@ class Board:
         return None
     
     def define_arcs(self):
-        arcs = set()  # Set to track added arcs
-        all_arcs = []  # Final list of arcs
+        arcs = set()  
+        all_arcs = []  
 
-        # Row arcs: Pair all cells in each row
-        for i in range(9):  # Row index
-            for j in range(9):  # First cell in the row
-                for k in range(j + 1, 9):  # Pair with all subsequent cells in the row
+        # Row arcs
+        for i in range(9):  
+            for j in range(9):  
+                for k in range(j + 1, 9):  # kol box so8ayar by pair m3 kol elly ba3do
                     arc = ((i, j), (i, k))
                     if arc not in arcs:
                         arcs.add(arc)
                         all_arcs.append(arc)
 
-        # Column arcs: Pair all cells in each column
-        for j in range(9):  # Column index
-            for i in range(9):  # First cell in the column
-                for k in range(i + 1, 9):  # Pair with all subsequent cells in the column
+        # Column arcs
+        for j in range(9):  
+            for i in range(9):  
+                for k in range(i + 1, 9):  # kol box so8ayar by pair m3 kol elly ta7to
                     arc = ((i, j), (k, j))
                     if arc not in arcs:
                         arcs.add(arc)
                         all_arcs.append(arc)
 
-        # Subgrid arcs: Pair all cells within each 3x3 subgrid
-        for box_row in range(0, 9, 3):  # Top-left corner row of each subgrid
-            for box_col in range(0, 9, 3):  # Top-left corner column of each subgrid
-                # Collect all cells in the current 3x3 subgrid
+        # 3x3 box arcs
+        for box_row in range(0, 9, 3):  # Top-left corner row 
+            for box_col in range(0, 9, 3):  # Top-left corner column 
                 subgrid_cells = [(box_row + r, box_col + c) for r in range(3) for c in range(3)]
                 for i in range(len(subgrid_cells)):
                     for j in range(i + 1, len(subgrid_cells)):  # Pair each cell with the others
@@ -79,15 +79,8 @@ class Board:
                             all_arcs.append(arc)
 
         return all_arcs
-
-
-
-                        
-                        
-                        
-                    
-
         return arcs
+        
     
     def is_valid(self, num, row, col):
         # CONSTRAINTS
@@ -99,7 +92,7 @@ class Board:
         if num in [self.board[i][col] for i in range(9)]:
             return False
 
-        # Check 3x3 subgrid
+        # Check 3x3 box
         start_row, start_col = 3 * (row // 3), 3 * (col // 3)
         for i in range(start_row, start_row + 3):
             for j in range(start_col, start_col + 3):
@@ -109,12 +102,13 @@ class Board:
         return True
 
     def solve(self):
-        empty = self.find_empty()  # SELECT_UNASSIGNED_VARIABLE in lecture pseudocode
+        # da psuedocode elmo7adra bzabt fa kateb gamb kol satr shabah eh felmo7adra
+        empty = self.find_empty()  # SELECT_UNASSIGNED_VARIABLE 
         if not empty:
-            return True  # assignment is complete
+            return True  
         row, col = empty
 
-        for num in range(1, 10):  # ORDER_DOMAIN_VALUES in lecture pseudocode
+        for num in range(1, 10):  # ORDER_DOMAIN_VALUES 
             if self.is_valid(num, row, col):  # Check if value is consistent
                 self.board[row][col] = num  # Assign the value (var = value)
                 if self.solve():  # Recursive call to backtrack
@@ -124,10 +118,10 @@ class Board:
         return False
 
     def validate_puzzle(self):
-        # copy the original grid to a temporary board
+        # copy mn el original
         temp_board = [row[:] for row in self.board]
         if self.solve():
-            self.board = temp_board  # Restore original grid
+            self.board = temp_board  # Restore original 3shan bykon 7alaha f .solve()
             return True
         return False
 
@@ -140,11 +134,11 @@ class Board:
             col = random.randint(0, 8)
             num = random.randint(1, 9)
 
-            if self.board[row][col] == 0 and self.is_valid(num, row, col):  # Check constraints
+            if self.board[row][col] == 0 and self.is_valid(num, row, col):  # yenfa3 elrakam yt7at hena wla l2
                 self.board[row][col] = num
-                if self.validate_puzzle():  # Ensure solvability
+                if self.validate_puzzle():  # ba3d ma y7oto byshof el board solvable wla l2 
                     cells_filled += 1
-                else:  # Undo if unsolvable
+                else:  # bysheelo lw mb2ash solvable
                     self.board[row][col] = 0
 
         return self.board
@@ -164,13 +158,17 @@ if __name__ == "__main__":
 
     board = Board()
     board.set_initial_values(grid)
-    # IF YOU WANT TO TEST ARCS DO THIS print(board.arcs) 
+
     print("Initial Sudoku:")
     board.print_board()
+
     print("\nDomains for Each Cell:")
     board.print_domains()
 
-    # IF YOU WANT TO TEST IF THE GAME IS SOLVABLE DO THIS
+    # ELLY 3AYEZ Y PRINT KOL EL ARCS  
+    #print(board.arcs)
+
+    # ELLY 3AYEZ YGARAB EL BOARD LEHA 7AL WLA L2 DO THIS
     '''
     if board.validate_puzzle():
         print("The input puzzle is solvable.")
@@ -178,7 +176,7 @@ if __name__ == "__main__":
         print("The input puzzle is not solvable.")
     '''
 
-    # IF YOU WANT TO TEST GENERATING A GAME AND SOLVING IT DO THIS
+    # ELLY 3AYEZ YGARAB Y GENERATE RANDOM BOARD W EL AI YE7ELAHA
     '''
     board2 = Board()
     # Generate a random puzzle
