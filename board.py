@@ -1,7 +1,8 @@
+import random
+
 class Board:
     def __init__(self):
         self.board = [[0 for _ in range(9)] for _ in range(9)]
-        self.domains = [[set(range(1, 10)) for _ in range(9)] for _ in range(9)]
 
     def print_board(self):
         for i in range(9):
@@ -18,32 +19,20 @@ class Board:
         print("  - - - - - - - - - - - - - ")
 
     def set_initial_values(self, grid):
-        for i in range(9):
-            for j in range(9):
-                self.board[i][j] = grid[i][j]
+        self.board = [row[:] for row in grid]
 
-    #Find the next empty cell
     def find_empty(self):
         for i in range(9):
             for j in range(9):
                 if self.board[i][j] == 0:
-                    return i, j  # Return row, column of the empty cell
+                    return i, j
         return None
-    
-    #print the domains of each cell at the beginning
-    def print_domains(self):
-        for i in range(9):
-            for j in range(9):
-                if self.board[i][j] == 0:
-                    print(f"Cell ({i}, {j}): {self.domains[i][j]}")
-                
 
-    # Helper: Check if placing num in cell (row, col) is valid
     def is_valid(self, num, row, col):
         # Check row
         if num in self.board[row]:
             return False
-        
+
         # Check column
         if num in [self.board[i][col] for i in range(9)]:
             return False
@@ -57,25 +46,50 @@ class Board:
 
         return True
 
-    # Backtracking function
     def solve(self):
         empty = self.find_empty()
-        if not empty:  # If no empty cells, the puzzle is solved
+        if not empty:
             return True
         row, col = empty
 
-        for num in range(1, 10):  # Try numbers 1 to 9
+        for num in range(1, 10):
             if self.is_valid(num, row, col):
-                self.board[row][col] = num  # Assign num
-                if self.solve():  # Recursive call
+                self.board[row][col] = num
+                if self.solve():
                     return True
-                self.board[row][col] = 0  # Backtrack
+                self.board[row][col] = 0
 
         return False
 
+    def validate_puzzle(self):
+        # copy of the board
+        temp_board = [row[:] for row in self.board]
+        if self.solve():
+            self.board = temp_board  # Restore the original grid
+            return True
+        return False
+
+    def generate_random_puzzle(self, filled_cells):
+        self.board = [[0 for _ in range(9)] for _ in range(9)]
+        cells_filled = 0
+
+        while cells_filled < filled_cells:
+            row = random.randint(0, 8)
+            col = random.randint(0, 8)
+            num = random.randint(1, 9)
+
+            if self.board[row][col] == 0 and self.is_valid(num, row, col):
+                self.board[row][col] = num
+                if self.validate_puzzle():  # Check if the puzzle remains solvable
+                    cells_filled += 1
+                else:  # Undo if it makes the puzzle unsolvable
+                    self.board[row][col] = 0
+
+        return self.board
+
 
 if __name__ == "__main__":
-    # Example Sudoku grid (0 represents empty cells)
+    # Example Sudoku grid
     grid = [
         [5, 3, 0, 0, 7, 0, 0, 0, 0],
         [6, 0, 0, 1, 9, 5, 0, 0, 0],
@@ -87,13 +101,24 @@ if __name__ == "__main__":
         [0, 0, 0, 4, 1, 9, 0, 0, 5],
         [0, 0, 0, 0, 8, 0, 0, 7, 9]
     ]
+
     board = Board()
     board.set_initial_values(grid)
-    board.print_domains()
+
     print("Initial Sudoku:")
     board.print_board()
-    if board.solve():
-        print("Solved Sudoku:")
-        board.print_board()
+
+    # Validate the puzzle
+    if board.validate_puzzle():
+        print("The input puzzle is solvable.")
     else:
-        print("No solution exists.")
+        print("The input puzzle is not solvable.")
+
+    board2 = Board()
+    # Generate a random puzzle
+    print("\nGenerating a random Sudoku puzzle:")
+    board2.generate_random_puzzle(15)
+    board2.print_board()
+    board2.solve()
+    print("\nSolved Sudoku:")
+    board2.print_board()
