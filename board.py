@@ -2,6 +2,7 @@ import random
 
 class Board:
     def __init__(self):
+        # VARIABLES: Each cell in this 9x9 grid represents a variable
         self.board = [[0 for _ in range(9)] for _ in range(9)]
 
     def print_board(self):
@@ -25,10 +26,11 @@ class Board:
         for i in range(9):
             for j in range(9):
                 if self.board[i][j] == 0:
-                    return i, j
+                    return i, j  #(row, col)
         return None
 
     def is_valid(self, num, row, col):
+        # CONSTRAINTS
         # Check row
         if num in self.board[row]:
             return False
@@ -47,25 +49,25 @@ class Board:
         return True
 
     def solve(self):
-        empty = self.find_empty()
+        empty = self.find_empty()  # SELECT_UNASSIGNED_VARIABLE in lecture pseudocode
         if not empty:
-            return True
+            return True  # assignment is complete
         row, col = empty
 
-        for num in range(1, 10):
-            if self.is_valid(num, row, col):
-                self.board[row][col] = num
-                if self.solve():
+        for num in range(1, 10):  # ORDER_DOMAIN_VALUES in lecture pseudocode
+            if self.is_valid(num, row, col):  # Check if value is consistent
+                self.board[row][col] = num  # Assign the value (var = value)
+                if self.solve():  # Recursive call to backtrack
                     return True
-                self.board[row][col] = 0
+                self.board[row][col] = 0  # Remove assignment (backtrack)
 
         return False
 
     def validate_puzzle(self):
-        # copy of the board
+        # copy the original grid to a temporary board
         temp_board = [row[:] for row in self.board]
         if self.solve():
-            self.board = temp_board  # Restore the original grid
+            self.board = temp_board  # Restore original grid
             return True
         return False
 
@@ -78,15 +80,14 @@ class Board:
             col = random.randint(0, 8)
             num = random.randint(1, 9)
 
-            if self.board[row][col] == 0 and self.is_valid(num, row, col):
+            if self.board[row][col] == 0 and self.is_valid(num, row, col):  # Check constraints
                 self.board[row][col] = num
-                if self.validate_puzzle():  # Check if the puzzle remains solvable
+                if self.validate_puzzle():  # Ensure solvability
                     cells_filled += 1
-                else:  # Undo if it makes the puzzle unsolvable
+                else:  # Undo if unsolvable
                     self.board[row][col] = 0
 
         return self.board
-
 
 if __name__ == "__main__":
     # Example Sudoku grid
@@ -117,7 +118,7 @@ if __name__ == "__main__":
     board2 = Board()
     # Generate a random puzzle
     print("\nGenerating a random Sudoku puzzle:")
-    board2.generate_random_puzzle(15)
+    board2.generate_random_puzzle(15) # you can change the number of filled cells
     board2.print_board()
     board2.solve()
     print("\nSolved Sudoku:")
