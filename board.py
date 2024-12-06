@@ -31,19 +31,26 @@ class Board:
         return None
     
     def define_arcs(self):
-        arcs = []
+        arcs = set()  # Set to track added arcs
+        all_arcs = []  # Final list of arcs
 
         # Row arcs: Pair all cells in each row
         for i in range(9):  # Row index
             for j in range(9):  # First cell in the row
                 for k in range(j + 1, 9):  # Pair with all subsequent cells in the row
-                    arcs.append(((i, j), (i, k)))
+                    arc = ((i, j), (i, k))
+                    if arc not in arcs:
+                        arcs.add(arc)
+                        all_arcs.append(arc)
 
         # Column arcs: Pair all cells in each column
         for j in range(9):  # Column index
             for i in range(9):  # First cell in the column
                 for k in range(i + 1, 9):  # Pair with all subsequent cells in the column
-                    arcs.append(((i, j), (k, j)))
+                    arc = ((i, j), (k, j))
+                    if arc not in arcs:
+                        arcs.add(arc)
+                        all_arcs.append(arc)
 
         # Subgrid arcs: Pair all cells within each 3x3 subgrid
         for box_row in range(0, 9, 3):  # Top-left corner row of each subgrid
@@ -52,9 +59,13 @@ class Board:
                 subgrid_cells = [(box_row + r, box_col + c) for r in range(3) for c in range(3)]
                 for i in range(len(subgrid_cells)):
                     for j in range(i + 1, len(subgrid_cells)):  # Pair each cell with the others
-                        arcs.append((subgrid_cells[i], subgrid_cells[j]))
+                        arc = (subgrid_cells[i], subgrid_cells[j])
+                        if arc not in arcs:
+                            arcs.add(arc)
+                            all_arcs.append(arc)
 
-        return arcs
+        return all_arcs
+
 
 
                         
@@ -139,7 +150,7 @@ if __name__ == "__main__":
 
     board = Board()
     board.set_initial_values(grid)
-    print(board.define_arcs())
+    print(board.arcs[:10]) 
 
     print("Initial Sudoku:")
     board.print_board()
