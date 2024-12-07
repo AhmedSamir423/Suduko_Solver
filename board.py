@@ -47,8 +47,8 @@ class Board:
         return None
     
     def define_arcs(self):
-        arcs = set()  # Set to avoid duplicates
-        all_arcs = []  # List to store arcs for processing later
+        arcs = set()  
+        all_arcs = []  
 
         # Row arcs
         for i in range(9):  
@@ -142,23 +142,23 @@ class Board:
     def apply_arc_consistency(self):
         print("\nDomains before applying arc consistency:")
         self.print_domains()
-        queue = deque(self.arcs)  # Initialize queue with all arcs
+        queue = deque(self.arcs)  # all arcs
         print(f"Initial queue size: {len(queue)}")
         while queue:
             (Xi, Xj) = queue.popleft()  # Dequeue an arc
             print(f"Processing arc: ({Xi}, {Xj})")
             if self.revise(Xi, Xj):  # If the domain of Xi is revised
-                if not self.domains[Xi[0]][Xi[1]]:# If the domain of Xi becomes empty, puzzle is unsolvable
+                if not self.domains[Xi[0]][Xi[1]]:# If  domain of Xi empty, puzzle is unsolvable
                     print("No valid values left in domain of", Xi)  
                     return False
-                # Add all arcs (Xk, Xi) where Xk is a neighbor of Xi back to the queue
+                # bnzawed kol el arcs fel 7aga elly 3adelnaha 3shan lw hatet3adel tany
                 for Xk in self.get_neighbors(Xi):
-                    if Xk != Xj:  # Avoid re-adding the arc we just processed
+                    if Xk != Xj:  
                         queue.append((Xk, Xi))
             print(f"Queue size after processing arc: {len(queue)}")
         print("\nDomains after applying arc consistency:")
         self.print_domains()
-        return True  # Arc consistency achieved
+        return True  
 
     def revise(self, Xi, Xj):
         revised = False
@@ -177,13 +177,13 @@ class Board:
 
 
     def is_consistent(self, value, other_value):
-        return value != other_value  # Simple constraint: no two variables can have the same value
-
+        return value != other_value  
+    
     def get_neighbors(self, cell):
         neighbors = []
         row, col = cell
 
-        # Add neighbors in the same row, column, and subgrid
+        # Add neighbors in the same row, column, and 3x3 box
         for i in range(9):
             if i != col:  # Same row
                 neighbors.append((row, i))
@@ -194,7 +194,7 @@ class Board:
         start_row, start_col = 3 * (row // 3), 3 * (col // 3)
         for r in range(start_row, start_row + 3):
             for c in range(start_col, start_col + 3):
-                if (r, c) != cell:  # Exclude the current cell
+                if (r, c) != cell:  
                     neighbors.append((r, c))
 
         return neighbors
