@@ -140,24 +140,16 @@ class Board:
         return False
 
     def apply_arc_consistency(self):
-        print("\nDomains before applying arc consistency:")
-        self.print_domains()
         queue = deque(self.arcs)  # all arcs
-        print(f"Initial queue size: {len(queue)}")
         while queue:
             (Xi, Xj) = queue.popleft()  # Dequeue an arc
-            print(f"Processing arc: ({Xi}, {Xj})")
-            if self.revise(Xi, Xj):  # If the domain of Xi is revised
+            if self.revise(Xi, Xj):
                 if not self.domains[Xi[0]][Xi[1]]:# If  domain of Xi empty, puzzle is unsolvable
-                    print("No valid values left in domain of", Xi)  
                     return False
                 # bnzawed kol el arcs fel 7aga elly 3adelnaha 3shan lw hatet3adel tany
                 for Xk in self.get_neighbors(Xi):
                     if Xk != Xj:  
                         queue.append((Xk, Xi))
-            print(f"Queue size after processing arc: {len(queue)}")
-        print("\nDomains after applying arc consistency:")
-        self.print_domains()
         return True  
 
     def revise(self, Xi, Xj):
@@ -165,13 +157,10 @@ class Board:
         domain_Xi = self.domains[Xi[0]][Xi[1]]
         domain_Xj = self.domains[Xj[0]][Xj[1]]
 
-        print(f"Checking revision for arc ({Xi}, {Xj})")
         for value in domain_Xi[:]:
             if not any(self.is_consistent(value, other_value) for other_value in domain_Xj):
                 domain_Xi.remove(value)  # Remove inconsistent value
                 revised = True
-                print(f"Removed value {value} from domain of {Xi} due to inconsistency with {Xj}")
-
         return revised
 
 
@@ -235,11 +224,13 @@ if __name__ == "__main__":
 
     print("Initial Sudoku:")
     board.print_board()
-    '''
+
     print("\nDomains for Each Cell:")
     board.print_domains()
-    '''
+    
     board.apply_arc_consistency()
+    print("domains after applying arc consistency:")
+    board.print_domains()
     
     # ELLY 3AYEZ Y PRINT KOL EL ARCS  
     #print(board.arcs)
