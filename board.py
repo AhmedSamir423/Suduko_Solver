@@ -1,3 +1,4 @@
+from collections import deque
 import random
 
 class Board:
@@ -46,41 +47,54 @@ class Board:
         return None
     
     def define_arcs(self):
-        arcs = set()  
-        all_arcs = []  
+        arcs = set()  # Set to avoid duplicates
+        all_arcs = []  # List to store arcs for processing later
 
         # Row arcs
         for i in range(9):  
             for j in range(9):  
-                for k in range(j + 1, 9):  # kol box so8ayar by pair m3 kol elly ba3do
+                for k in range(j + 1, 9):  # Pair each cell with the other in the same row
                     arc = ((i, j), (i, k))
                     if arc not in arcs:
                         arcs.add(arc)
                         all_arcs.append(arc)
+                    # Add reverse arc
+                    reverse_arc = ((i, k), (i, j))
+                    if reverse_arc not in arcs:
+                        arcs.add(reverse_arc)
+                        all_arcs.append(reverse_arc)
 
         # Column arcs
         for j in range(9):  
             for i in range(9):  
-                for k in range(i + 1, 9):  # kol box so8ayar by pair m3 kol elly ta7to
+                for k in range(i + 1, 9):  # Pair each cell with the other in the same column
                     arc = ((i, j), (k, j))
                     if arc not in arcs:
                         arcs.add(arc)
                         all_arcs.append(arc)
+                    # Add reverse arc
+                    reverse_arc = ((k, j), (i, j))
+                    if reverse_arc not in arcs:
+                        arcs.add(reverse_arc)
+                        all_arcs.append(reverse_arc)
 
         # 3x3 box arcs
-        for box_row in range(0, 9, 3):  # Top-left corner row 
-            for box_col in range(0, 9, 3):  # Top-left corner column 
+        for box_row in range(0, 9, 3):  # Iterate over each 3x3 box
+            for box_col in range(0, 9, 3):  
                 subgrid_cells = [(box_row + r, box_col + c) for r in range(3) for c in range(3)]
                 for i in range(len(subgrid_cells)):
-                    for j in range(i + 1, len(subgrid_cells)):  # Pair each cell with the others
+                    for j in range(i + 1, len(subgrid_cells)):  # Pair each cell with the others in the same 3x3 box
                         arc = (subgrid_cells[i], subgrid_cells[j])
                         if arc not in arcs:
                             arcs.add(arc)
                             all_arcs.append(arc)
+                        # Add reverse arc
+                        reverse_arc = (subgrid_cells[j], subgrid_cells[i])
+                        if reverse_arc not in arcs:
+                            arcs.add(reverse_arc)
+                            all_arcs.append(reverse_arc)
 
         return all_arcs
-        return arcs
-        
     
     def is_valid(self, num, row, col):
         # CONSTRAINTS
@@ -125,6 +139,66 @@ class Board:
             return True
         return False
 
+    def apply_arc_consistency(self):
+        print("\nDomains before applying arc consistency:")
+        self.print_domains()
+        queue = deque(self.arcs)  # Initialize queue with all arcs
+        print(f"Initial queue size: {len(queue)}")
+        while queue:
+            (Xi, Xj) = queue.popleft()  # Dequeue an arc
+            print(f"Processing arc: ({Xi}, {Xj})")
+            if self.revise(Xi, Xj):  # If the domain of Xi is revised
+                if not self.domains[Xi[0]][Xi[1]]:# If the domain of Xi becomes empty, puzzle is unsolvable
+                    print("No valid values left in domain of", Xi)  
+                    return False
+                # Add all arcs (Xk, Xi) where Xk is a neighbor of Xi back to the queue
+                for Xk in self.get_neighbors(Xi):
+                    if Xk != Xj:  # Avoid re-adding the arc we just processed
+                        queue.append((Xk, Xi))
+            print(f"Queue size after processing arc: {len(queue)}")
+        print("\nDomains after applying arc consistency:")
+        self.print_domains()
+        return True  # Arc consistency achieved
+
+    def revise(self, Xi, Xj):
+        revised = False
+        domain_Xi = self.domains[Xi[0]][Xi[1]]
+        domain_Xj = self.domains[Xj[0]][Xj[1]]
+
+        print(f"Checking revision for arc ({Xi}, {Xj})")
+        for value in domain_Xi[:]:
+            if not any(self.is_consistent(value, other_value) for other_value in domain_Xj):
+                domain_Xi.remove(value)  # Remove inconsistent value
+                revised = True
+                print(f"Removed value {value} from domain of {Xi} due to inconsistency with {Xj}")
+
+        return revised
+
+
+
+    def is_consistent(self, value, other_value):
+        return value != other_value  # Simple constraint: no two variables can have the same value
+
+    def get_neighbors(self, cell):
+        neighbors = []
+        row, col = cell
+
+        # Add neighbors in the same row, column, and subgrid
+        for i in range(9):
+            if i != col:  # Same row
+                neighbors.append((row, i))
+            if i != row:  # Same column
+                neighbors.append((i, col))
+
+        # Add neighbors in the same subgrid
+        start_row, start_col = 3 * (row // 3), 3 * (col // 3)
+        for r in range(start_row, start_row + 3):
+            for c in range(start_col, start_col + 3):
+                if (r, c) != cell:  # Exclude the current cell
+                    neighbors.append((r, c))
+
+        return neighbors
+
     def generate_random_puzzle(self, filled_cells):
         self.board = [[0 for _ in range(9)] for _ in range(9)]
         cells_filled = 0
@@ -161,10 +235,12 @@ if __name__ == "__main__":
 
     print("Initial Sudoku:")
     board.print_board()
-
+    '''
     print("\nDomains for Each Cell:")
     board.print_domains()
-
+    '''
+    board.apply_arc_consistency()
+    
     # ELLY 3AYEZ Y PRINT KOL EL ARCS  
     #print(board.arcs)
 
