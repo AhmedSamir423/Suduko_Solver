@@ -139,7 +139,7 @@ class Board:
             return True
         return False
 
-    def apply_arc_consistency(self):
+    def apply_arc_consistency(self, callback=None):
         queue = deque(self.arcs)  # all arcs
         while queue:
             (Xi, Xj) = queue.popleft()  # Dequeue an arc
@@ -153,6 +153,8 @@ class Board:
                     self.board[Xi[0]][Xi[1]] = value
                     print(f"\nCell ({Xi[0]}, {Xi[1]}) is solved with value {value}:")
                     self.print_board()
+                    if callback:
+                        callback()
 
                 # bnzawed kol el arcs fel 7aga elly 3adelnaha 3shan lw hatet3adel tany
                 for Xk in self.get_neighbors(Xi):
@@ -213,7 +215,7 @@ class Board:
                     cells_filled += 1
                 else:  # bysheelo lw mb2ash solvable
                     self.board[row][col] = 0
-        
+        self.print_board()    
         self.update_domains()
 
         return self.board
