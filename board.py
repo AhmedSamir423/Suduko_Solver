@@ -144,14 +144,23 @@ class Board:
         while queue:
             (Xi, Xj) = queue.popleft()  # Dequeue an arc
             if self.revise(Xi, Xj):
-                if not self.domains[Xi[0]][Xi[1]]:# If  domain of Xi empty, puzzle is unsolvable
+                if not self.domains[Xi[0]][Xi[1]]:  # If domain of Xi is empty, puzzle is unsolvable
                     return False
+
+                # If the domain of Xi becomes a singleton, assign its value and print the board
+                if len(self.domains[Xi[0]][Xi[1]]) == 1:
+                    value = self.domains[Xi[0]][Xi[1]][0]
+                    self.board[Xi[0]][Xi[1]] = value
+                    print(f"\nCell ({Xi[0]}, {Xi[1]}) is solved with value {value}:")
+                    self.print_board()
+
                 # bnzawed kol el arcs fel 7aga elly 3adelnaha 3shan lw hatet3adel tany
                 for Xk in self.get_neighbors(Xi):
-                    if Xk != Xj:  
+                    if Xk != Xj:
                         queue.append((Xk, Xi))
-            
-        return True  
+
+        return True
+
 
     def revise(self, Xi, Xj):
         revised = False
