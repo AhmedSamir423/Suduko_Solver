@@ -150,6 +150,7 @@ class Board:
                 for Xk in self.get_neighbors(Xi):
                     if Xk != Xj:  
                         queue.append((Xk, Xi))
+            
         return True  
 
     def revise(self, Xi, Xj):
@@ -203,24 +204,16 @@ class Board:
                     cells_filled += 1
                 else:  # bysheelo lw mb2ash solvable
                     self.board[row][col] = 0
+        
+        self.update_domains()
 
         return self.board
 
 if __name__ == "__main__":
-    grid = [
-        [5, 3, 0, 0, 7, 0, 0, 0, 0],
-        [6, 0, 0, 1, 9, 5, 0, 0, 0],
-        [0, 9, 8, 0, 0, 0, 0, 6, 0],
-        [8, 0, 0, 0, 6, 0, 0, 0, 3],
-        [4, 0, 0, 8, 0, 3, 0, 0, 1],
-        [7, 0, 0, 0, 2, 0, 0, 0, 6],
-        [0, 6, 0, 0, 0, 0, 2, 8, 0],
-        [0, 0, 0, 4, 1, 9, 0, 0, 5],
-        [0, 0, 0, 0, 8, 0, 0, 7, 9]
-    ]
+    
 
     board = Board()
-    board.set_initial_values(grid)
+    board.generate_random_puzzle(45)
 
     print("Initial Sudoku:")
     board.print_board()
