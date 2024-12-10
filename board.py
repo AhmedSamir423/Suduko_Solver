@@ -219,6 +219,12 @@ class Board:
         self.update_domains()
 
         return self.board
+    def is_solved(self):
+        for i in range(9):
+            for j in range(9):
+                if self.board[i][j] == 0:
+                    return False
+        return True
 
 if __name__ == "__main__":
     
