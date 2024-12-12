@@ -7,6 +7,16 @@ class Board:
         self.board = [[0 for _ in range(9)] for _ in range(9)]
         self.arcs = self.define_arcs()
         self.domains = [[[] for _ in range(9)] for _ in range(9)]  # To store the domains for each cell
+
+    def set_difficulty(self, difficulty):
+        """Sets the difficulty level and adjusts the number of filled cells."""
+        self.difficulty = difficulty
+        if difficulty == "Easy":
+            self.filled_cells = random.randint(50, 60)
+        elif difficulty == "Medium":
+            self.filled_cells = random.randint(35, 45)
+        elif difficulty == "Hard":
+            self.filled_cells = random.randint(25, 35)    
         
 
     def print_board(self):
@@ -29,7 +39,7 @@ class Board:
                 if self.board[i][j] != 0:  
                     self.domains[i][j] = [self.board[i][j]]  # Set domain to the number already in the cell
                 else:  
-                    self.domains[i][j] = [1, 2, 3, 4, 5, 6, 7, 8, 9]  # Initialize domain to all possible values
+                    self.domains[i][j] = [num for num in range(1, 10) if self.is_valid(num, i, j)]  # Filter valid values
 
     def print_domains(self):
         for row in self.domains:
@@ -40,11 +50,19 @@ class Board:
         self.update_domains()
 
     def find_empty(self):
+        min_options = 10  # More than the maximum domain size
+        best_cell = None
         for i in range(9):
             for j in range(9):
-                if self.board[i][j] == 0:
-                    return i, j  #(row, col)
-        return None
+                if self.board[i][j] == 0:  # Check only unassigned cells
+                    options = len(self.domains[i][j])
+                    if options < min_options:
+                        min_options = options
+                        best_cell = (i, j)
+                        if min_options == 1:  # Optimal choice found
+                            return best_cell
+        return best_cell
+
     
     def define_arcs(self):
         arcs = set()  
@@ -116,20 +134,43 @@ class Board:
         return True
 
     def solve(self):
-        # da psuedocode elmo7adra bzabt fa kateb gamb kol satr shabah eh felmo7adra
-        empty = self.find_empty()  # SELECT_UNASSIGNED_VARIABLE 
+        # Find the next empty cell
+        empty = self.find_empty()
         if not empty:
-            return True  
+            return True  # Puzzle solved
+
         row, col = empty
+        random.shuffle(self.domains[row][col])  # Add randomness for puzzle diversity
 
-        for num in range(1, 10):  # ORDER_DOMAIN_VALUES 
-            if self.is_valid(num, row, col):  # Check if value is consistent
-                self.board[row][col] = num  # Assign the value (var = value)
-                if self.solve():  # Recursive call to backtrack
+        for num in self.domains[row][col]:
+            if self.is_valid(num, row, col):
+                # Assign the value to the board
+                self.board[row][col] = num
+                previous_domains = [row[:] for row in self.domains]  # Save domain state
+
+                # Perform constraint propagation using AC-3
+                #if self.forward_check(row, col, num):
+                #if self.apply_arc_consistency()
+                if self.solve():  # Recursive backtracking
                     return True
-                self.board[row][col] = 0  # Remove assignment (backtrack)
 
-        return False
+                # Undo changes if AC-3 or recursion fails
+                self.board[row][col] = 0
+                self.domains = previous_domains  # Restore domains
+
+        return False  # Trigger backtracking
+
+
+    
+    def forward_check(self, row, col, num):
+        for neighbor in self.get_neighbors((row, col)):
+            r, c = neighbor
+            if num in self.domains[r][c]:
+                self.domains[r][c].remove(num)
+                if len(self.domains[r][c]) == 0:  # If domain becomes empty, fail
+                    return False
+        return True
+
 
     def validate_puzzle(self):
         # copy mn el original
@@ -199,48 +240,97 @@ class Board:
                     neighbors.append((r, c))
 
         return neighbors
+   
+    def generate_random_puzzle(self, difficulty):
+        self.set_difficulty(difficulty)  # Set difficulty before generating the puzzle
 
-    def generate_random_puzzle(self, filled_cells):
+        # Step 1: Generate a fully solved Sudoku board
         self.board = [[0 for _ in range(9)] for _ in range(9)]
-        cells_filled = 0
+        self.set_initial_values(self.board)
+        while not self.solve():
+            self.board = [[0 for _ in range(9)] for _ in range(9)]
+            self.set_initial_values(self.board)
+            print("Failed to generate a fully solved Sudoku board. Retrying...")
+            
 
-        while cells_filled < filled_cells:
+        # Step 2: Remove numbers while ensuring solvability
+        total_cells = 81
+        cells_to_remove = total_cells - self.filled_cells
+        removed = 0
+
+        while removed < cells_to_remove:
             row = random.randint(0, 8)
             col = random.randint(0, 8)
-            num = random.randint(1, 9)
 
-            if self.board[row][col] == 0 and self.is_valid(num, row, col):  # yenfa3 elrakam yt7at hena wla l2
-                self.board[row][col] = num
-                if self.validate_puzzle():  # ba3d ma y7oto byshof el board solvable wla l2 
-                    cells_filled += 1
-                else:  # bysheelo lw mb2ash solvable
+            if self.board[row][col] != 0:  # Only remove if the cell is not already empty
+                if self.can_remove_and_stay_unique(row, col):
                     self.board[row][col] = 0
-        self.print_board()    
-        self.update_domains()
+                    removed += 1
 
+        self.update_domains()
         return self.board
+    
+    def can_remove_and_stay_unique(self,row,col):
+        backup = self.board[row][col]
+        self.board[row][col] = 0
+        is_unique = self.validate_uniqueness()
+        self.board[row][col] = backup
+        return is_unique
+
+    def validate_uniqueness(self):
+     """
+     Checks if the puzzle has a unique solution.
+     """
+     solutions = []
+     self._find_all_solutions(solutions,max_solutions=2)
+     return len(solutions) == 1
+
+    def _find_all_solutions(self, solutions, max_solutions=None):
+     """
+     Helper function to find all solutions of the current board.
+     """
+     empty = self.find_empty()
+     if not empty:
+        solutions.append([row[:] for row in self.board])  # Add the solved board
+        return len(solutions)<max_solutions
+
+     row, col = empty
+     for num in range(1, 10):
+        if self.is_valid(num, row, col):
+            self.board[row][col] = num
+            if not self._find_all_solutions(solutions, max_solutions):
+                self.board[row][col] = 0
+                return False
+            self.board[row][col] = 0  # Backtrack
+
+     return True
+
     def is_solved(self):
-        for i in range(9):
-            for j in range(9):
-                if self.board[i][j] == 0:
-                    return False
-        return True
+        return all(self.board[i][j] != 0 for i in range(9) for j in range(9))
 
 if __name__ == "__main__":
-    
-
     board = Board()
-    board.generate_random_puzzle(45)
+
+    # Generate a puzzle with 'Medium' difficulty
+    board.generate_random_puzzle("Easy")
 
     print("Initial Sudoku:")
     board.print_board()
 
     print("\nDomains for Each Cell:")
     board.print_domains()
-    
+
+    # Apply arc consistency and print updated domains
     board.apply_arc_consistency()
-    print("domains after applying arc consistency:")
+    print("Domains after applying arc consistency:")
     board.print_domains()
+
+    # Print the solved puzzle
+
+    #if not board.is_solved():
+        #board.solve()
+    #print("\nSolved Sudoku:")
+    #board.print_board()
     
     # ELLY 3AYEZ Y PRINT KOL EL ARCS  
     #print(board.arcs)
