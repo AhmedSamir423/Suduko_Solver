@@ -134,31 +134,44 @@ class Board:
         return True
 
     def solve(self):
-        # Find the next empty cell
-        empty = self.find_empty()
+        # Use MRV to select the next variable to assign
+        empty = self.mrv_select_unassigned_variable()
         if not empty:
             return True  # Puzzle solved
 
         row, col = empty
-        random.shuffle(self.domains[row][col])  # Add randomness for puzzle diversity
 
-        for num in self.domains[row][col]:
+        # Order the domain values using LCV
+        for num in self.order_domain_values(row, col):
             if self.is_valid(num, row, col):
                 # Assign the value to the board
                 self.board[row][col] = num
                 previous_domains = [row[:] for row in self.domains]  # Save domain state
 
-                # Perform constraint propagation using AC-3
-                #if self.forward_check(row, col, num):
-                #if self.apply_arc_consistency()
-                if self.solve():  # Recursive backtracking
+                # Perform recursive backtracking
+                if self.solve():
                     return True
 
-                # Undo changes if AC-3 or recursion fails
+                # Undo changes if recursion fails
                 self.board[row][col] = 0
                 self.domains = previous_domains  # Restore domains
 
         return False  # Trigger backtracking
+
+    def order_domain_values(self, row, col):
+       
+        def count_constraints(value):
+            constraints = 0
+            for neighbor in self.get_neighbors((row, col)):
+                r, c = neighbor
+                if self.board[r][c] == 0 and value in self.domains[r][c]:
+                    constraints += 1
+            return constraints
+
+        # Sort the domain values by the number of constraints they impose on neighbors
+        return sorted(self.domains[row][col], key=count_constraints)
+
+
 
 
     
@@ -181,14 +194,14 @@ class Board:
         return False
 
     def apply_arc_consistency(self, callback=None):
-        queue = deque(self.arcs)  # all arcs
+        queue = deque(self.arcs)  # All arcs
         while queue:
             (Xi, Xj) = queue.popleft()  # Dequeue an arc
             if self.revise(Xi, Xj):
                 if not self.domains[Xi[0]][Xi[1]]:  # If domain of Xi is empty, puzzle is unsolvable
                     return False
 
-                # If the domain of Xi becomes a singleton, assign its value and print the board
+                # If the domain of Xi becomes a singleton, assign its value
                 if len(self.domains[Xi[0]][Xi[1]]) == 1:
                     value = self.domains[Xi[0]][Xi[1]][0]
                     self.board[Xi[0]][Xi[1]] = value
@@ -197,12 +210,23 @@ class Board:
                     if callback:
                         callback()
 
-                # bnzawed kol el arcs fel 7aga elly 3adelnaha 3shan lw hatet3adel tany
+                # Add all related arcs back to the queue
                 for Xk in self.get_neighbors(Xi):
                     if Xk != Xj:
                         queue.append((Xk, Xi))
 
+        # Ensure board reflects all singleton domains after AC-3
+        self.update_board_from_domains()
+
         return True
+    def update_board_from_domains(self):
+        
+        for i in range(9):
+            for j in range(9):
+                if len(self.domains[i][j]) == 1:  # Singleton domain
+                    self.board[i][j] = self.domains[i][j][0]
+
+
 
 
     def revise(self, Xi, Xj):
@@ -213,8 +237,27 @@ class Board:
         for value in domain_Xi[:]:
             if not any(self.is_consistent(value, other_value) for other_value in domain_Xj):
                 domain_Xi.remove(value)  # Remove inconsistent value
+                self.print_domains()
                 revised = True
         return revised
+    
+    def mrv_select_unassigned_variable(self):
+        """Select the unassigned variable with the smallest domain size (MRV)."""
+        min_options = float('inf')  # Start with an infinitely large domain size
+        best_cell = None
+
+        for i in range(9):
+            for j in range(9):
+                if self.board[i][j] == 0:  # Only consider unassigned variables
+                    domain_size = len(self.domains[i][j])
+                    if domain_size < min_options:
+                        min_options = domain_size
+                        best_cell = (i, j)
+                        if domain_size == 1:  # Optimal choice found
+                            return best_cell
+
+        return best_cell
+
 
 
 
@@ -307,6 +350,32 @@ class Board:
 
     def is_solved(self):
         return all(self.board[i][j] != 0 for i in range(9) for j in range(9))
+
+    def get_domain(self, row, col):
+        """Returns the domain (possible values) for a given cell"""
+        if self.board[row][col] != 0:  # If cell already has a value
+            return set([self.board[row][col]])
+        
+        domain = set(range(1, 10))  # Start with all possible values
+        
+        # Remove values that appear in the same row
+        for j in range(9):
+            if self.board[row][j] != 0:
+                domain.discard(self.board[row][j])
+        
+        # Remove values that appear in the same column
+        for i in range(9):
+            if self.board[i][col] != 0:
+                domain.discard(self.board[i][col])
+        
+        # Remove values that appear in the same 3x3 box
+        box_row, box_col = 3 * (row // 3), 3 * (col // 3)
+        for i in range(box_row, box_row + 3):
+            for j in range(box_col, box_col + 3):
+                if self.board[i][j] != 0:
+                    domain.discard(self.board[i][j])
+        
+        return domain
 
 if __name__ == "__main__":
     board = Board()
