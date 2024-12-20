@@ -134,15 +134,15 @@ class Board:
         return True
 
     def solve(self):
-        # Use MRV to select the next variable to assign
+    # Use MRV to select the next variable to assign
         empty = self.mrv_select_unassigned_variable()
         if not empty:
             return True  # Puzzle solved
 
         row, col = empty
+        random.shuffle(self.domains[row][col])  # Add randomness for diversity
 
-        # Order the domain values using LCV
-        for num in self.order_domain_values(row, col):
+        for num in self.domains[row][col]:
             if self.is_valid(num, row, col):
                 # Assign the value to the board
                 self.board[row][col] = num
@@ -157,7 +157,7 @@ class Board:
                 self.domains = previous_domains  # Restore domains
 
         return False  # Trigger backtracking
-
+    
     def order_domain_values(self, row, col):
        
         def count_constraints(value):
